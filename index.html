@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zodiac Prediction</title>
+    <style>
+        :root {
+            --bg-color: #111;
+            --text-color: #eee;
+            --accent-color: #6af;
+            --hover-glow: #6af33a;
+            --panel-bg: rgba(0,0,0,0.8);
+        }
+        .neon {
+            --bg-color: #000;
+            --text-color: #0ff;
+            --accent-color: #f0f;
+            --hover-glow: #ff0;
+            --panel-bg: rgba(0,0,0,0.9);
+        }
+        body {
+            background: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            transition: background 0.5s;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px var(--accent-color);
+        }
+        #themeToggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--accent-color);
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            color: var(--bg-color);
+            border-radius: 5px;
+        }
+        #zodiacGrid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .zodiac {
+            text-align: center;
+            padding: 20px;
+            border: 2px solid var(--accent-color);
+            border-radius: 10px;
+            transition: box-shadow 0.3s, transform 0.2s;
+            cursor: pointer;
+            background: radial-gradient(circle at top left, var(--accent-color)33%, transparent 80%);
+        }
+        .zodiac:hover {
+            box-shadow: 0 0 15px var(--accent-color);
+            transform: scale(1.05);
+        }
+        .zodiac span {
+            display: block;
+            font-size: 2.8em;
+        }
+        #resultPanel {
+            position: fixed;
+            right: -300px;
+            top: 0;
+            width: 300px;
+            height: 100%;
+            background: var(--panel-bg);
+            color: var(--text-color);
+            padding: 20px;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.5);
+            transition: right 0.4s;
+            overflow-y: auto;
+        }
+        #resultPanel.open {
+            right: 0;
+        }
+        #resultPanel h2 {
+            margin-top: 0;
+            text-align: center;
+        }
+        #closePanel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: transparent;
+            border: none;
+            color: var(--text-color);
+            font-size: 1.2em;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <button id="themeToggle">Toggle Theme</button>
+    <h1>🔮 Zodiac Predictions 🔮</h1>    <p style="text-align:center; font-size:0.9em; opacity:0.8;">Click anywhere on background to cycle colors (black, lightblue, lavender).</p>    <div id="zodiacGrid">
+        <!-- signs added by JS -->
+    </div>
+    <div id="resultPanel">
+        <button id="closePanel">✖</button>
+        <h2 id="signTitle"></h2>
+        <p id="descText" style="font-size:0.9em;opacity:0.9;"></p>
+        <p id="predictionText"></p>
+    </div>
+    <script>
+        const signs = [
+            {name:'Aries',emoji:'♈', desc:'Aries individuals are bold and fearless, charging headfirst into life with unmatched energy. Their pioneering spirit makes them natural leaders who tackle challenges aggressively. They thrive on competition and possess a fiery enthusiasm that energizes those around them. While sometimes impulsive, Aries people are honest, straightforward, and fiercely loyal to their friends. Their courage and confidence often inspire others to take action.'},
+            {name:'Taurus',emoji:'♉', desc:'Taurus natives are grounded and dependable, finding comfort in stability and routine. They have a deep appreciation for beauty, luxury, and the finer things in life. Patient and practical, they work steadily towards their goals with unwavering persistence. Taureans value loyalty in relationships and enjoy creating a secure home environment. Though they can be stubborn, once committed they are incredibly supportive and reliable.'},
+            {name:'Gemini',emoji:'♊', desc:'Geminis are endlessly curious, witty, and social, thriving on communication and mental stimulation. Their dual nature allows them to see both sides of every issue, making them adaptable and versatile conversationalists. They love learning new things, meeting people, and exploring ideas. Although they may appear fickle or indecisive at times, their quick mind and playful humor make them engaging and entertaining companions.'},
+            {name:'Cancer',emoji:'♋', desc:'Cancerians are deeply empathetic and nurturing, often putting the needs of loved ones before their own. They possess an intuitive understanding of emotions and form strong bonds with family and friends. Home is their sanctuary, and they strive to create warmth and security in their surroundings. Their protective nature can sometimes surface as moodiness, but beneath their shell lies great compassion and loyalty.'},
+            {name:'Leo',emoji:'♌', desc:'Leos radiate confidence, charisma, and generosity, commanding attention wherever they go. Their dramatic flair and love of self‑expression make them natural performers and leaders. Driven by a desire to shine, they often take on grand projects and inspire others with their optimism. Although they can seem self‑centered, Leo’s heart is warm, and they fiercely defend and uplift those they care about.'},
+            {name:'Virgo',emoji:'♍', desc:'Virgos are meticulous, analytical, and dedicated to helping others. They notice the smallest details and strive for perfection in all they do. Their practical approach and strong work ethic make them excellent problem-solvers. While sometimes overly critical of themselves, Virgos are also humble and service-oriented, finding fulfillment in making life more efficient and meaningful.'},
+            {name:'Libra',emoji:'♎', desc:'Librans seek balance, harmony, and beauty in every aspect of life. They are diplomatic, gracious, and skilled at seeing multiple perspectives. With a strong sense of justice, they strive to foster fairness and cooperation. Social and charming, they build relationships with ease and enjoy surrounding themselves with elegance. Their indecision stems from their desire to weigh options thoughtfully.'},
+            {name:'Scorpio',emoji:'♏', desc:'Scorpios are intense, passionate, and magnetic, often attracting others with their mysterious aura. They are deeply emotional and unafraid of transformation, embracing change as a path to growth. With fierce determination, they pursue goals relentlessly and remain loyal to those they trust. Though guarded, their depth of feeling and insight make them profoundly connected to life’s truths.'},
+            {name:'Sagittarius',emoji:'♐', desc:'Sagittarians are adventurous, optimistic, and freedom-loving, always seeking new experiences and knowledge. Their philosophical nature drives them to explore ideas, cultures, and philosophies. They are honest, sometimes blunt, but always well-intentioned. With boundless enthusiasm, they inspire others to broaden their horizons and embrace the journey of life.'},
+            {name:'Capricorn',emoji:'♑', desc:'Capricorns are disciplined, responsible, and ambitious, steadily climbing toward their long-term goals. They possess a practical mindset and a strong sense of duty, often taking on leadership roles. Patient and resourceful, they build solid foundations for success. Although they may appear reserved, Capricorns are loyal friends and deeply dedicated to their commitments.'},
+            {name:'Aquarius',emoji:'♒', desc:'Aquarians are innovative, humanitarian, and unconventional thinkers who march to their own beat. They value independence and often challenge societal norms in pursuit of progress. Their intellectual curiosity leads them to envision big ideas and future possibilities. While emotionally detached at times, their loyalty to causes and friends runs deep, and they strive to make the world a better place.'},
+            {name:'Pisces',emoji:'♓', desc:'Pisceans are compassionate, imaginative, and deeply in tune with the emotional currents around them. They possess a rich inner world, often expressing themselves through art or spirituality. Their sensitive nature makes them empathetic listeners and supportive confidants. While they may retreat into dreamy realms, their intuition and kindness touch the hearts of many.'}
+        ];
+        const fortunes = [
+            'Today you will find a surprise in your pocket.',
+            'A stranger will make you smile when you least expect it.',
+            'Wear something red; luck is on your side.',
+            'Trust your instincts and take that leap.',
+            'A small act of kindness will come back to you.',
+            'You will discover a new favorite song.',
+            'Expect a call from someone you haven’t heard from in years.',
+            'A forgotten task will be completed today effortlessly.',
+            'You will take the lead in an unexpected situation.',
+            'A peaceful moment will restore your energy.'
+        ];
+
+        const grid = document.getElementById('zodiacGrid');
+        signs.forEach(sign => {
+            const div = document.createElement('div');
+            div.className = 'zodiac';
+            // set accent color for this sign
+            // use single accent color defined in :root for uniform look
+            div.innerHTML = `<span>${sign.emoji}</span>${sign.name}`;
+            div.addEventListener('click', () => showPrediction(sign));
+            grid.appendChild(div);
+        });
+
+        const resultPanel = document.getElementById('resultPanel');
+        const signTitle = document.getElementById('signTitle');
+        const predictionText = document.getElementById('predictionText');
+        const closeBtn = document.getElementById('closePanel');
+        const themeToggle = document.getElementById('themeToggle');
+
+        function showPrediction(sign) {
+            const fortune = fortunes[Math.floor(Math.random() * fortunes.length)];
+            signTitle.textContent = sign.name;
+            descText.textContent = sign.desc;
+            predictionText.textContent = fortune;
+            resultPanel.classList.add('open');
+        }
+
+        closeBtn.addEventListener('click', () => {
+            resultPanel.classList.remove('open');
+        });
+
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('neon');
+        });
+
+        // background color cycle on click
+        const colors = ['black','lightblue','lavender'];
+        let colorIndex = 0;
+        document.body.addEventListener('click', e => {
+            // ignore clicks on interactive buttons to avoid interference
+            if (e.target.tagName === 'BUTTON') return;
+            colorIndex = (colorIndex + 1) % colors.length;
+            document.documentElement.style.setProperty('--bg-color', colors[colorIndex]);
+        });
+    </script>
+</body>
+</html>
+ 
